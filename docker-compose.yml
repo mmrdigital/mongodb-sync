@@ -1,0 +1,127 @@
+services:
+  mongo-source:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: testdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_source_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./docker/mongodb.key:/opt/keyfile/mongodb.key:ro
+    command: mongod --bind_ip_all --replSet rs0 --keyFile /opt/keyfile/mongodb.key
+    networks:
+      - mongodb-sync
+
+  mongo-dest:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: testdb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_dest_data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./docker/mongodb.key:/opt/keyfile/mongodb.key:ro
+    command: mongod --bind_ip_all --replSet rs1 --keyFile /opt/keyfile/mongodb.key
+    networks:
+      - mongodb-sync
+
+  mongo-setup:
+    image: mongo:7
+    networks:
+      - mongodb-sync
+    volumes:
+      - ./docker/init-replica-sets.sh:/init-replica-sets.sh
+    command: /bin/bash /init-replica-sets.sh
+    restart: "no"
+
+  mongodb-sync-coordinator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongo-setup
+    environment:
+      SOURCE_URI: mongodb://admin:password123@mongo-source:27017/testdb?authSource=admin&replicaSet=rs0
+      DEST_URI: mongodb://admin:password123@mongo-dest:27017/testdb?authSource=admin&replicaSet=rs1
+      SOURCE_DATABASE: testdb
+      DEST_DATABASE: testdb_synced
+      PROGRESS_DATABASE: sync_progress
+      
+      COLLECTIONS: users,products,orders
+      
+      BATCH_SIZE: 1000
+      MAX_RETRIES: 3
+      RETRY_DELAY: 5000
+      MAX_ACCEPTABLE_LAG: 2000
+      WORKERS_PER_COLLECTION: 3
+      
+      LOG_LEVEL: info
+    depends_on:
+      - mongo-source
+      - mongo-dest
+    command: ["node", "dist/index.js", "--mode", "coordinator"]
+    networks:
+      - mongodb-sync
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "node.*dist/index.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mongodb-sync-worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - mongo-setup
+    environment:
+      SOURCE_URI: mongodb://admin:password123@mongo-source:27017/testdb?authSource=admin&replicaSet=rs0
+      DEST_URI: mongodb://admin:password123@mongo-dest:27017/testdb?authSource=admin&replicaSet=rs1
+      SOURCE_DATABASE: testdb
+      DEST_DATABASE: testdb_synced
+      PROGRESS_DATABASE: sync_progress
+
+      COLLECTIONS: users,products,orders
+      
+      BATCH_SIZE: 1000
+      MAX_RETRIES: 3
+      RETRY_DELAY: 5000
+      MAX_ACCEPTABLE_LAG: 2000
+      WORKERS_PER_COLLECTION: 3
+      
+      LOG_LEVEL: info
+    depends_on:
+      - mongo-source
+      - mongo-dest
+      - mongodb-sync-coordinator
+    command: ["node", "dist/index.js", "--mode", "worker"]
+    networks:
+      - mongodb-sync
+    deploy:
+      replicas: 3
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "node.*dist/index.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongo_source_data:
+    driver: local
+  mongo_dest_data:
+    driver: local
+
+networks:
+  mongodb-sync:
+    driver: bridge

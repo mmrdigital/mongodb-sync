@@ -1,0 +1,13 @@
+{
+  "sourceUri": "mongodb://localhost:27017",
+  "destUri": "mongodb://localhost:27018",
+  "sourceDatabase": "source_db",
+  "destDatabase": "dest_db",
+  "progressDatabase": "sync_progress",
+  "collections": ["users", "products", "orders"],
+  "batchSize": 1000,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "maxAcceptableLag": 10000,
+  "workersPerCollection": 5
+}

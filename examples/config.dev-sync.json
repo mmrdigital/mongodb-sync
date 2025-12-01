@@ -1,0 +1,13 @@
+{
+  "sourceUri": "mongodb+srv://readonly:${MONGO_PASSWORD}@prod-cluster.mongodb.net/myapp?readPreference=secondary",
+  "destUri": "mongodb+srv://readwrite:${MONGO_PASSWORD}@dev-cluster.mongodb.net/myapp?retryWrites=true&w=majority", 
+  "sourceDatabase": "production",
+  "destDatabase": "development",
+  "progressDatabase": "dev_sync_progress",
+  "collections": ["users", "products", "orders", "analytics"],
+  "batchSize": 500,
+  "maxRetries": 3,
+  "retryDelay": 5000,
+  "maxAcceptableLag": 5000,
+  "workersPerCollection": 3
+}

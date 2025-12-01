@@ -1,0 +1,26 @@
+{
+  "sourceUri": "mongodb+srv://user:${MONGO_PASSWORD}@source-cluster.mongodb.net/myapp?retryWrites=true&w=majority",
+  "destUri": "mongodb+srv://user:${MONGO_PASSWORD}@dest-cluster.mongodb.net/myapp?retryWrites=true&w=majority",
+  "sourceDatabase": "production_app",
+  "destDatabase": "production_app_migrated", 
+  "progressDatabase": "sync_progress",
+  "collections": [
+    "users",
+    "user_profiles", 
+    "orders",
+    "order_items",
+    "products",
+    "categories",
+    "reviews",
+    "inventory",
+    "payments",
+    "shipping",
+    "analytics_events",
+    "logs"
+  ],
+  "batchSize": 2000,
+  "maxRetries": 5,
+  "retryDelay": 3000,
+  "maxAcceptableLag": 2000,
+  "workersPerCollection": 15
+}

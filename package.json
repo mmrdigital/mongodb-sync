@@ -1,0 +1,60 @@
+{
+  "name": "mongodb-sync-tool",
+  "version": "1.0.0",
+  "description": "A distributed MongoDB synchronization tool for migrating and streaming data between MongoDB clusters",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "start:coordinator": "node dist/index.js --mode coordinator",
+    "start:worker": "node dist/index.js --mode worker",
+    "dev": "tsx src/index.ts",
+    "dev:coordinator": "tsx src/index.ts --mode coordinator",
+    "dev:worker": "tsx src/index.ts --mode worker",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "clean": "rm -rf dist",
+    "docker:build": "docker build -t mongodb-sync-tool .",
+    "docker:run": "docker-compose up",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "k8s:delete": "kubectl delete -f k8s/"
+  },
+  "keywords": [
+    "mongodb",
+    "sync",
+    "replication",
+    "migration",
+    "database",
+    "distributed",
+    "kubernetes"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@mongodb-js/zstd": "^2.0.1",
+    "commander": "^11.1.0",
+    "dotenv": "^16.3.1",
+    "mongodb": "^6.3.0",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "eslint": "^8.56.0",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/mongodb-sync-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/mongodb-sync-tool/issues"
+  },
+  "homepage": "https://github.com/your-username/mongodb-sync-tool#readme"
+}
