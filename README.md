@@ -131,51 +131,6 @@ The console output provides real-time monitoring including system status, task p
 
 Logging levels can be configured via the `LOG_LEVEL` environment variable.
 
-## Docker Deployment
-
-### Dockerfile
-
-The included Dockerfile creates an optimized production image:
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY dist/ ./dist/
-EXPOSE 3000
-CMD ["node", "dist/index.js"]
-```
-
-### Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  coordinator:
-    build: .
-    command: ["node", "dist/index.js", "--mode", "coordinator"]
-    ports:
-      - "3000:3000"
-    environment:
-      - SOURCE_URI=mongodb://mongo-source:27017
-      - DEST_URI=mongodb://mongo-dest:27017
-      - SOURCE_DATABASE=myapp
-      - DEST_DATABASE=myapp_synced
-      - COLLECTIONS=users,orders
-    
-  worker:
-    build: .
-    command: ["node", "dist/index.js", "--mode", "worker"]
-    environment:
-      - SOURCE_URI=mongodb://mongo-source:27017  
-      - DEST_URI=mongodb://mongo-dest:27017
-      - SOURCE_DATABASE=myapp
-      - DEST_DATABASE=myapp_synced
-      - COLLECTIONS=users,orders
-    deploy:
-      replicas: 3
-```
 ## Contributing
 
 1. Fork the repository and create a feature branch
